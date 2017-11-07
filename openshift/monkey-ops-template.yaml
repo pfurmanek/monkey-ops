@@ -46,7 +46,7 @@ objects:
             value: ${MODE}                                             
           - name: TZ
             value: ${TZ}
-          image: produban/monkey-ops:1pf
+          image: dockerpfurmanek/monkey-ops:1
           imagePullPolicy: IfNotPresent
           name: ${APP_NAME}
           ports:
