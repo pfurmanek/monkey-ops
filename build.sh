@@ -11,5 +11,5 @@ CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ./image/monkey-ops ./
 
 if [ $? = 0 ]
 then
-	docker build ${PROXY} -t produban/monkey-ops:${TAG} -f ./image/Dockerfile ./image
+	docker build ${PROXY} -t dockerpfurmanek/monkey-ops:${TAG}
 fi
