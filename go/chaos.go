@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"time"
 	"os"
+        "strings"
 )
 
 //Get all the pods running from a project
@@ -225,16 +226,22 @@ func ExecuteChaos(chaosInput *ChaosInput, mode string) {
 			pods := GetPods(chaosInput.Token, chaosInput.Project, chaosInput.Url)
 			if pods != nil && len(pods) > 0 {
 				randPod := random(0, len(pods))
-        dcs := GetDCs(chaosInput)
-        log.Println("Prevent Monkey-Ops from attacking itself - pod name" + dcs[randPod].Name)
-        if dcs[randPod].Name != os.Getenv("APP_NAME"){
-          DeletePod(pods[randPod], chaosInput)
-        }
+				log.Println(pods[randPod])
+                                if strings.Contains(pods[randPod], os.Getenv("APP_NAME")) == true {
+                                        log.Println("Prevent Monkey-Ops from attacking itself")
+                                } else if strings.Contains(pods[randPod], "mssql") == true {
+                                        log.Println("Prevent Monkey-Ops from attacking mssql")
+                                } else if strings.Contains(pods[randPod], "postgre") == true {
+				        log.Println("Prevent Monkey-Ops from attacking postgre")
+                                } else {
+				        DeletePod(pods[randPod], chaosInput)
+                                }
 			}
 		case 2:
 			dcs := GetDCs(chaosInput)
 			if dcs != nil && len(dcs) > 0 {
 				randDc := random(0, len(dcs))
+				log.Println(dcs[randDc]);
 				replicas := dcs[randDc].Replicas
 				if replicas > 0 {
 					replicas--
@@ -242,15 +249,21 @@ func ExecuteChaos(chaosInput *ChaosInput, mode string) {
 					replicas++
 				}
 				//To avoid Monkey-ops atack itself
-				if dcs[randDc].Name ==  os.Getenv("APP_NAME"){
+				if dcs[randDc].Name == os.Getenv("APP_NAME") {
 					log.Println("Prevent Monkey-Ops from attacking itself")
-					if randDc == 0 {
-						randDc ++
-					} else {
-						randDc --
-					}
+                                } else if strings.Contains(dcs[randDc].Name, "mssql") == true {
+                                        log.Println("Prevent Monkey-Ops from attacking mssql")
+                                } else if strings.Contains(dcs[randDc].Name, "postgre") == true {
+				        log.Println("Prevent Monkey-Ops from attacking postgre")
+                                } else {
+					//if randDc == 0 {
+					//	randDc ++
+					//} else {
+					//	randDc --
+					//}
+                                        scaleDC(dcs[randDc].Name, chaosInput, replicas)
 				}
-				scaleDC(dcs[randDc].Name, chaosInput, replicas)
+				
 			}
 		}
 
