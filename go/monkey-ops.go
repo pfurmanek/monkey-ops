@@ -41,6 +41,7 @@ func main() {
 	} else {
 		apiServer = viper.GetString("API_SERVER")
 	}
+        log.Println("ApiServer: "+apiServer )
 	project := viper.GetString("PROJECT_NAME")
 	token := viper.GetString("TOKEN")
 	interval := viper.GetFloat64("INTERVAL")
