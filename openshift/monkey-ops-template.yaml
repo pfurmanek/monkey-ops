@@ -36,10 +36,10 @@ objects:
           - name: APP_NAME
             value: ${APP_NAME}
           - name: PROJECT_NAME
-#            valueFrom:
-#              fieldRef:
-#                fieldPath: metadata.namespace
-            value: ${PROJECT_NAME}
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+#            value: ${PROJECT_NAME}
           - name: INTERVAL
             value: ${INTERVAL}
           - name: MODE
