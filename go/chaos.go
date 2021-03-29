@@ -15,7 +15,7 @@ import (
 )
 
 //Get all the pods running from a project
-func GetPods(token string, project string, url string) []string {
+func GetPods(token string, project string, url string, names string) []string {
 
 	urlGetPods := url + "/api/v1/namespaces/" + project + "/pods"
 
@@ -53,6 +53,29 @@ func GetPods(token string, project string, url string) []string {
 	podsCustom := map[string]interface{}{}
 	json.Unmarshal(pods, &podsCustom)
 
+	//Create Names Variables
+	targetNames := strings.Split(names, ", ")
+
+	//Case to run against all pods
+	if podsCustom != nil  && len(podsCustom)> 0 && string(targetNames[0]) == "names" {
+		items := podsCustom["items"].([]interface{})
+
+		for _, item := range items {
+			itemObject := item.(map[string]interface{})
+			metadataMap := itemObject["metadata"].(map[string]interface{})
+			statusMap := itemObject["status"].(map[string]interface{})
+			status := statusMap["phase"].(string)
+
+			if status == "Running" {
+					log.Println("Adding  pod")
+					podsName = append(podsName, metadataMap["name"].(string))
+					log.Println(podsName)
+			}
+			return podsName
+		}
+	}
+
+	//Run Ordered Chaos against Specific Pods
 	if podsCustom != nil  && len(podsCustom)> 0 {
 		items := podsCustom["items"].([]interface{})
 
@@ -61,13 +84,29 @@ func GetPods(token string, project string, url string) []string {
 			metadataMap := itemObject["metadata"].(map[string]interface{})
 			statusMap := itemObject["status"].(map[string]interface{})
 			status := statusMap["phase"].(string)
-			if status == "Running" {
-				podsName = append(podsName, metadataMap["name"].(string))
-			}
+			appName := metadataMap["name"]
 
+			// If there was no passed, run "ordered" Chaos against listed pods
+			// No in-built Golang function to compare arrays, have to iterate over
+			// Iterate over []strings (ie targetNames), because it is not legal argument in strings.Contains
+			for _, name := range targetNames {
+				log.Println(name)
+				log.Println(appName)
+				if strings.Contains(metadataMap["name"].(string), name) {
+					if status == "Running" {
+						log.Println("Adding  ", appName)
+						podsName = append(podsName, metadataMap["name"].(string))
+						log.Println(podsName)
+					} else {
+						log.Println("Pod already stopping")
+					}
+				} else {
+					log.Println("Skipping pod ", appName)
+				}
+			}
 		}
 	}
-
+	log.Println("Pod List: ", podsName)
 	return podsName
 }
 
@@ -219,11 +258,12 @@ func ExecuteChaos(chaosInput *ChaosInput, mode string) {
 	for doChaos := (mode == "background" || (time.Since(start).Seconds() < chaosInput.TotalTime)); doChaos; doChaos = (mode == "background" || (time.Since(start).Seconds() < chaosInput.TotalTime)) {
 		
 		//Randomly choice if delete pod or scale a DC
-		randComponent := random(1, 3)
+		// Changing to only delete pods
+		randComponent := random(1, 2)
 
 		switch randComponent {
 		case 1:
-			pods := GetPods(chaosInput.Token, chaosInput.Project, chaosInput.Url)
+			pods := GetPods(chaosInput.Token, chaosInput.Project, chaosInput.Url, chaosInput.Names)
 			if pods != nil && len(pods) > 0 {
 				randPod := random(0, len(pods))
 				log.Println(pods[randPod])

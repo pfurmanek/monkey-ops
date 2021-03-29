@@ -15,12 +15,14 @@ type LoginInput struct {
 	Url      string    `json:"url"`
 }
 
+//The third field sets a default value
 type ChaosInput struct {
 	Url      string    `json:"url"`
 	Project string `json:"project"`
 	Token string `json:"token"`
 	Interval float64 `json:"interval"`
 	TotalTime float64 `json:"totalTime"`
+	Names      string    `json:"names"`
 }
 
 type ChaosOutput struct {

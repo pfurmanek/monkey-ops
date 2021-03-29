@@ -20,7 +20,7 @@ Monkey-Ops is prepared to running into a docker image. Monkey-Ops also includes 
 Monkey-Ops has two different modes of execution: background or rest.
 
 * **Background**: With the Background mode, the service is running nonstop until you stop the container.
-* **Rest**: With the Rest mode, you consume an api rest that allows you login in Openshift, choose a project, and execute the chaos for a certain time.
+* **Rest**: With the Rest mode, you consume an api rest that allows you login in Openshift, choose a project, and execute the chaos for a certain time. In addition, it will allow you to specify pod names that you want to attack, as well as the option to scale or not your deployments.
 
 The service accept parameters as flags or environment variables. These are the input flags required:
 
@@ -29,6 +29,7 @@ The service accept parameters as flags or environment variables. These are the i
       --MODE string           Execution mode: background or rest (by default "background")
       --PROJECT_NAME string   Project to get crazy
       --TOKEN string          Bearer token with edit grants to access to the Openshift project
+	  --NAMES string		  Name of the pods you want to attack
       
 ### Usage with Docker
 
@@ -127,3 +128,6 @@ Monkey-Ops Api Rest expose two endpoints:
 >     "totalTime": Total Time of monkey-ops execution in seconds
 >	}
 
+### Using in Jenkins
+
+This code has also been extended to easily integrate in Jenkins. After creating a docker image from the Dockefile here (and modifying your yml to represent your images and project name), you can reference the added jenkinsfile to see how it can be intgrated.

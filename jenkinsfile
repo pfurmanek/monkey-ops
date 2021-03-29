@@ -1,0 +1,69 @@
+#!groovy
+pipeline {
+
+    agent {
+        label 'docker-maven-slave'
+    }
+    triggers {
+        githubPush()
+    }
+    parameters {
+        string(name: 'names', defaultValue: 'ratings', description: 'The names of the pods we want to hit with Chaos', trim: true)
+        string(name: 'interval', defaultValue: '10', description: 'The time (in seconds) we want to have between each Chaos attack', trim: true)
+        string(name: 'totalTime', defaultValue: '300', description: 'The duration (in seconds) we want chaos', trim: true)
+        string(name: 'openshift_url', defaultValue: '', trim: true)
+        choice(name: 'scaling', choices: ['noscaling', 'scaling'], description: 'Whether or not to scale application')
+        string(name: 'tokenId', description: 'Your monkey-ops security token', trim: true)
+        string(name: 'endpoint', description: 'Your monkey-ops route', trim: true)
+        string(name: 'msid', description: 'Your msib', trim: true)
+    }
+    
+// Trying environment variables
+    environment {
+        token = credentials("${tokenId}")
+        BUILD_VERSION = "$currentBuild.number"
+        BRANCH = "$BRANCH_NAME"
+        monkey_url = 'your-base-url'
+        projectBAK = 'chaos-demo'
+
+
+        OCP_PROJECT = 'chaos-demo'
+    }
+// Trying options
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '5'))
+    }
+// Trying stages
+    stages {
+        stage('Calculate Default settings') {
+            steps {
+                echo "params = $params"
+                // calculate variables (based on msid)
+                script {
+                    project = "otu-$msid" // Can be changed to specify your own project
+                    jmeterJob = "otu-$msid-jmeter"
+                }
+            }
+        }
+        stage('Run Chaos Global Library') {
+
+            // Hard coded Chaos tests
+            //stage ('Chaos Tests') {
+            steps {
+
+                sh """
+                    curl -X POST \
+                    -H 'Content-Type: application/json' \
+                    -d '{"token":"${token}","url":"${openshift_url}","project":"${project}","interval":'${interval}',"totalTime":'${totalTime}',"names":"${names}","scaling":"${scaling}"}' \\
+                    ${endpoint}/chaos
+                """
+            }
+        }
+
+        stage('Starting Jmeter Job') {
+            steps {
+                build job: "${jmeterJob}"
+            }
+        }
+    }
+}
